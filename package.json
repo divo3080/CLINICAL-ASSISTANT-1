@@ -1,10 +1,11 @@
 {
   "name": "clinical-reasoning-webapp",
-  "version": "7.0.0",
-  "description": "Hệ thống Tiếp Cận Lâm Sàng Toàn Diện v7.0",
+  "version": "6.0.0",
+  "description": "Full-stack Clinical Reasoning WebApp v6.0 with Gemini API Integration & Discharge Summary",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

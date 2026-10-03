@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Hệ Thống Tiếp Cận Lâm Sàng Toàn Diện</title>
+  <title>Hệ Thống Tiếp Cận Lâm Sàng Toàn Diện v6.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    .glass-card { background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
-    .tab-active { border-bottom: 3px solid #0284c7; color: #0284c7; font-weight: 700; }
+    .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.9); }
+    .tab-active { border-bottom: 3px solid #0284c7; color: #0284c7; font-weight: 700; background-color: #f0f9ff; }
+    .markdown-body ul { list-style-type: disc; margin-left: 1.25rem; margin-top: 0.25rem; margin-bottom: 0.25rem; }
+    .markdown-body ol { list-style-type: decimal; margin-left: 1.25rem; margin-top: 0.25rem; margin-bottom: 0.25rem; }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 700; margin-top: 0.75rem; margin-bottom: 0.25rem; color: #0f172a; }
+    .markdown-body table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 0.75rem; }
+    .markdown-body th, .markdown-body td { border: 1px solid #cbd5e1; padding: 4px 8px; text-align: left; }
+    .markdown-body th { background-color: #f1f5f9; font-weight: 600; }
   </style>
 </head>
 <body class="h-full flex flex-col font-sans text-slate-800">
@@ -18,22 +24,21 @@
   <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-sky-600 rounded-xl">
+        <div class="p-2 bg-sky-600 rounded-xl shadow">
           <i data-lucide="stethoscope" class="w-6 h-6 text-white"></i>
         </div>
         <div>
           <h1 class="text-base font-bold flex items-center gap-2">
-            Clinical AI Assistant
-            <span class="text-[10px] bg-sky-500/30 text-sky-200 px-2 py-0.5 rounded-full font-normal">20y Internist</span>
+            Clinical AI Assistant <span class="text-[10px] bg-sky-500/30 text-sky-200 px-2 py-0.5 rounded-full font-semibold">v6.0 Internist</span>
           </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">Quy trình tiếp cận lâm sàng 6 bước chuẩn hóa y khoa</p>
+          <p class="text-xs text-slate-400 hidden sm:block">Quy trình tiếp cận lâm sàng chuyên sâu & Tổng kết xuất viện</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btnNewCase" class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold">
+        <button id="btnNewCase" class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold shadow">
           <i data-lucide="plus" class="w-4 h-4"></i> Case Mới
         </button>
-        <button id="btnSettings" class="p-2 text-slate-300 hover:text-white">
+        <button id="btnSettings" class="p-2 text-slate-300 hover:text-white transition">
           <i data-lucide="settings" class="w-5 h-5"></i>
         </button>
       </div>
@@ -41,95 +46,334 @@
   </header>
 
   <!-- MAIN APP CONTAINER -->
-  <div class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-6 flex flex-col lg:flex-row gap-4 overflow-hidden">
+  <div class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 flex flex-col lg:flex-row gap-4 overflow-hidden">
     
-    <!-- SIDEBAR: CASE LIST -->
-    <aside class="w-full lg:w-72 glass-card rounded-2xl p-4 flex flex-col gap-3 shrink-0">
-      <div class="flex items-center justify-between border-b pb-2">
-        <h2 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+    <!-- SIDEBAR: CASE LIST & LỊCH SỬ DIỄN TIẾN -->
+    <aside class="w-full lg:w-72 glass-card rounded-2xl p-3 flex flex-col gap-3 shrink-0">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h2 class="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
           <i data-lucide="folder-open" class="w-4 h-4 text-sky-600"></i> Danh Sách Case Lâm Sàng
         </h2>
         <span id="caseCountBadge" class="text-xs bg-slate-100 font-semibold px-2 py-0.5 rounded-full">0</span>
       </div>
-      <div id="caseListContainer" class="flex-1 overflow-y-auto space-y-2 max-h-40 lg:max-h-none"></div>
+      <div id="caseListContainer" class="flex-1 overflow-y-auto space-y-1.5 max-h-36 lg:max-h-60"></div>
+
+      <!-- CỘT LỊCH SỬ DIỄN TIẾN THEO NGÀY -->
+      <div class="border-t border-slate-200 pt-2 flex flex-col flex-1">
+        <h3 class="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5 mb-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> Lịch Sử Diễn Tiến Ngày
+        </h3>
+        <div id="progressHistorySidebar" class="flex-1 overflow-y-auto space-y-1.5 text-xs">
+          <p class="text-slate-400 italic text-[11px]">Chưa có diễn tiến ngày nào...</p>
+        </div>
+      </div>
     </aside>
 
-    <!-- WORKFLOW 6 TABS & CONTENT -->
-    <main class="flex-1 flex flex-col glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[calc(100vh-6rem)]">
+    <!-- WORKFLOW 6 PHẦN & CONTENT -->
+    <main class="flex-1 flex flex-col glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[calc(100vh-5.5rem)]">
       
       <!-- CASE TITLE BAR -->
       <div class="p-3 bg-white border-b border-slate-200 flex items-center justify-between gap-2">
-        <input id="inputCaseTitle" type="text" class="font-bold text-slate-800 text-base bg-transparent border-b border-transparent focus:border-sky-500 focus:outline-none w-full px-1" placeholder="Nhập tên / Mã bệnh nhân..." />
-        <span id="textCreatedAt" class="text-xs text-slate-400 shrink-0">Tạo lúc: --/--</span>
+        <div class="flex-1 flex items-center gap-2">
+          <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded shrink-0">CASE</span>
+          <input id="inputCaseTitle" type="text" class="font-bold text-slate-800 text-sm sm:text-base bg-transparent border-b border-transparent focus:border-sky-500 focus:outline-none w-full px-1" placeholder="Tên / Mã Bệnh Nhân..." />
+        </div>
+        <button id="btnSaveCase" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium flex items-center gap-1 shrink-0">
+          <i data-lucide="save" class="w-3.5 h-3.5"></i> Lưu
+        </button>
       </div>
 
       <!-- TABS NAVIGATION -->
-      <nav class="flex overflow-x-auto bg-slate-100/80 border-b border-slate-200 px-2 text-xs sm:text-sm shrink-0">
-        <button class="tab-btn tab-active px-3 py-3 whitespace-nowrap" data-tab="1">1. Khởi Đầu</button>
-        <button class="tab-btn text-slate-600 px-3 py-3 whitespace-nowrap" data-tab="2">2. Phân Tích Vấn Đề</button>
-        <button class="tab-btn text-slate-600 px-3 py-3 whitespace-nowrap" data-tab="3">3. Chẩn Đoán Sơ Bộ</button>
-        <button class="tab-btn text-slate-600 px-3 py-3 whitespace-nowrap" data-tab="4">4. CLS Bổ Sung</button>
-        <button class="tab-btn text-slate-600 px-3 py-3 whitespace-nowrap" data-tab="5">5. Chẩn Đoán Xác Định</button>
-        <button class="tab-btn text-slate-600 px-3 py-3 whitespace-nowrap" data-tab="6">6. Phác Đồ Điều Trị</button>
+      <nav class="flex overflow-x-auto bg-slate-100/90 border-b border-slate-200 px-2 text-xs sm:text-sm shrink-0">
+        <button class="tab-btn tab-active px-3 py-2.5 whitespace-nowrap" data-tab="1">1. Hành Chính & Nhập Viện</button>
+        <button class="tab-btn text-slate-600 px-3 py-2.5 whitespace-nowrap" data-tab="2">2. Vấn Đề - ICD10 Sơ Bộ</button>
+        <button class="tab-btn text-slate-600 px-3 py-2.5 whitespace-nowrap" data-tab="3">3. Chẩn Đoán Hiện Tại</button>
+        <button class="tab-btn text-slate-600 px-3 py-2.5 whitespace-nowrap" data-tab="4">4. Diễn Tiến & Trend CLS</button>
+        <button class="tab-btn text-slate-600 px-3 py-2.5 whitespace-nowrap" data-tab="5">5. Phác Đồ 3 Ngày</button>
+        <button class="tab-btn text-slate-600 px-3 py-2.5 whitespace-nowrap" data-tab="6">6. Y Lệnh & Xuất Viện</button>
       </nav>
 
       <!-- TAB PANELS -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        <!-- Panel 1 -->
+      <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+        
+        <!-- PHẦN 1: HÀNH CHÍNH & NGÀY NHẬP VIỆN -->
         <div id="panelTab1" class="tab-panel space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            <input id="s1_age" type="number" value="68" placeholder="Tuổi" class="p-2 border rounded-lg" />
-            <select id="s1_gender" class="p-2 border rounded-lg"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select>
-            <input id="s1_complaint" type="text" value="Khó thở cấp tính, đau ngực" placeholder="Lý do vào viện" class="p-2 border rounded-lg" />
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="font-bold text-slate-600">Họ và tên bệnh nhân:</label>
+              <input id="p1_name" type="text" value="Nguyễn Văn A" class="w-full p-2 border rounded-lg mt-1" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">Giới tính:</label>
+              <select id="p1_gender" class="w-full p-2 border rounded-lg mt-1">
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">Tuổi / Năm sinh:</label>
+              <input id="p1_age" type="text" value="68 tuổi (1958)" class="w-full p-2 border rounded-lg mt-1" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">Ngày nhập viện (DD/MM/YYYY):</label>
+              <input id="p1_date" type="text" value="01/10/2026" class="w-full p-2 border rounded-lg mt-1" placeholder="01/10/2026" />
+            </div>
           </div>
-          <textarea id="s1_vitals" rows="2" class="w-full p-2 text-xs border rounded-lg" placeholder="Sinh hiệu">Mạch: 115, HA: 170/95, Thở: 28, SpO2: 86%</textarea>
-          <textarea id="s1_history" rows="3" class="w-full p-2 text-xs border rounded-lg" placeholder="Bệnh sử">Bệnh nhân khó thở đột ngột cách nhập viện 2 giờ, khó thở khi nằm bẹt, ho đờm bọt hồng, đau đè nặng sau xương ức...</textarea>
-          <textarea id="s1_pmh" rows="2" class="w-full p-2 text-xs border rounded-lg" placeholder="Tiền sử">Tăng huyết áp 10 năm, ĐTĐ tuýp 2 (12 năm), hút thuốc 20 bao.năm...</textarea>
-          <textarea id="s1_physical" rows="2" class="w-full p-2 text-xs border rounded-lg" placeholder="Khám thực thể">Phổi rale ẩm dâng 2 đáy. POCUS phổi: B-profile lan tỏa 2 bên (lung rockets)...</textarea>
-          <textarea id="s1_labs" rows="2" class="w-full p-2 text-xs border rounded-lg" placeholder="Cận lâm sàng ban đầu">Troponin I: 0.18 ng/mL, NT-proBNP: 4200 pg/mL. ECG: Nhịp xoang nhanh, ST chênh xuống V4-V6...</textarea>
+
+          <!-- NHẬP THÔ VĂN BẢN BỆNH ÁN -->
+          <div class="bg-sky-50/70 p-3 rounded-xl border border-sky-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-sky-800 text-xs flex items-center gap-1">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Nhập toàn bộ thông tin ghi nhận thô ở bệnh nhân:
+              </label>
+              <button id="btnAutoParsePart1" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> ✨ AI Tự Động Phân Loại
+              </button>
+            </div>
+            <textarea id="p1_raw_text" rows="3" class="w-full p-2 text-xs border rounded-lg bg-white" placeholder="Dán văn bản khám bệnh, tóm tắt bệnh án thô vào đây..."></textarea>
+          </div>
+
+          <!-- CÁC MỤC CẤU TRÚC PHÂN LOẠI -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="font-semibold text-slate-700">Sinh hiệu:</label>
+              <textarea id="p1_vitals" rows="2" class="w-full p-2 border rounded-lg mt-1">Mạch: 115, HA: 170/95, Thở: 28, SpO2: 86% (khí trời), T: 37.2°C</textarea>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Lý do vào viện (Chief Complaint):</label>
+              <textarea id="p1_complaint" rows="2" class="w-full p-2 border rounded-lg mt-1">Khó thở cấp tính, đau ngực bóp nghẹt</textarea>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Bệnh sử & Triệu chứng cơ năng:</label>
+              <textarea id="p1_history" rows="3" class="w-full p-2 border rounded-lg mt-1">Khó thở đột ngột cách nhập viện 2h, tăng khi nằm bẹt, ho đờm bọt hồng, đau đè nặng sau xương ức lan lên vai trái...</textarea>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Tiền căn bản thân & gia đình:</label>
+              <textarea id="p1_pmh" rows="3" class="w-full p-2 border rounded-lg mt-1">Tăng huyết áp 10 năm, ĐTĐ tuýp 2 (12 năm), Hút thuốc lá 20 bao.năm...</textarea>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Khám lâm sàng các cơ quan:</label>
+              <textarea id="p1_physical" rows="3" class="w-full p-2 border rounded-lg mt-1">Phổi rale ẩm dâng 2 đáy. POCUS phổi: B-profile lan tỏa 2 bên (lung rockets)...</textarea>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Kết quả xét nghiệm & Cận lâm sàng ban đầu:</label>
+              <textarea id="p1_labs" rows="3" class="w-full p-2 border rounded-lg mt-1">WBC: 11.2 K/uL, Troponin I: 0.18 ng/mL, NT-proBNP: 4200 pg/mL. ECG: Nhịp xoang nhanh, ST chênh xuống V4-V6...</textarea>
+              
+              <!-- NÚT TẢI FILE / CHỤP ẢNH TỪ CAMERA -->
+              <div class="mt-2 flex items-center gap-2">
+                <input type="file" id="p1_image_input" accept="image/*,.pdf" capture="environment" class="hidden" multiple />
+                <button type="button" onclick="document.getElementById('p1_image_input').click()" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[11px] font-semibold flex items-center gap-1">
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i> Tải ảnh / Chụp hình CLS
+                </button>
+                <span id="p1_image_count" class="text-[11px] text-slate-500 italic">Chưa chọn tệp...</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Panels 2-6 (AI Dynamic Analysis) -->
+        <!-- PHẦN 2: VẤN ĐỀ - CHẨN ĐOÁN SƠ BỘ ICD-10 -->
         <div id="panelTab2" class="tab-panel hidden space-y-3">
-          <button class="btn-ai-analyze px-4 py-2.5 bg-sky-600 text-white rounded-xl text-xs font-bold shadow" data-step="2">🤖 AI Phân Tích Danh Sách Vấn Đề (Bước 2)</button>
-          <div id="aiOutput_2" class="markdown-body bg-white p-4 rounded-xl border border-slate-200 min-h-[100px] text-xs"></div>
+          <div class="bg-sky-50 p-3 rounded-xl border border-sky-200 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span class="text-xs text-sky-800 font-semibold">Tự động phân tích danh sách vấn đề & Đưa ra Chẩn đoán sơ bộ gắn Mã ICD-10 Bộ Y tế</span>
+            <button class="btn-ai-analyze px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1" data-section="2">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Phân Tích Phần 2
+            </button>
+          </div>
+
+          <!-- YÊU CẦU PHÂN TÍCH CỤ THỂ -->
+          <div>
+            <input id="prompt_sec_2" type="text" class="w-full p-2 border rounded-lg text-xs" placeholder="Nhập yêu cầu phân tích cụ thể cho Phần 2 (VD: Tập trung phân biệt phù phổi cấp do tim vs ARDS)..." />
+          </div>
+
+          <!-- AI OUTPUT CARD HAS EDITABLE TEXTAREA -->
+          <div class="bg-white p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between border-b pb-1">
+              <span class="text-xs font-bold text-slate-700">Kết quả phân tích AI (Phần 2):</span>
+              <button class="btn-toggle-edit text-xs text-sky-600 font-semibold hover:underline" data-target="out_text_2">✏️ Chỉnh sửa thủ công</button>
+            </div>
+            <div id="out_render_2" class="markdown-body text-xs min-h-[120px]"></div>
+            <textarea id="out_text_2" rows="6" class="w-full p-2 border rounded-lg text-xs hidden font-mono"></textarea>
+          </div>
         </div>
 
+        <!-- PHẦN 3: CHẨN ĐOÁN HIỆN TẠI -->
         <div id="panelTab3" class="tab-panel hidden space-y-3">
-          <button class="btn-ai-analyze px-4 py-2.5 bg-sky-600 text-white rounded-xl text-xs font-bold shadow" data-step="3">🤖 AI Biện Luận Chẩn Đoán Sơ Bộ (Bước 3)</button>
-          <div id="aiOutput_3" class="markdown-body bg-white p-4 rounded-xl border border-slate-200 min-h-[100px] text-xs"></div>
+          <div class="space-y-2">
+            <label class="font-bold text-slate-700 text-xs">Nhập các cận lâm sàng bổ sung mới thực hiện:</label>
+            <textarea id="p3_additional_labs" rows="3" class="w-full p-2 border rounded-lg text-xs" placeholder="- Khí máu: pH 7.31, PaO2 60 mmHg. Troponin I hs (3h): Tăng vọt 2.45 ng/mL. Siêu âm tim: LVEF 38%, giảm động vùng..."></textarea>
+            
+            <div class="flex items-center gap-2">
+              <input type="file" id="p3_image_input" accept="image/*,.pdf" capture="environment" class="hidden" multiple />
+              <button type="button" onclick="document.getElementById('p3_image_input').click()" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[11px] font-semibold flex items-center gap-1">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i> Tải ảnh / Chụp hình CLS bổ sung
+              </button>
+              <span id="p3_image_count" class="text-[11px] text-slate-500 italic">Chưa chọn tệp...</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <input id="prompt_sec_3" type="text" class="w-full sm:w-2/3 p-2 border rounded-lg text-xs" placeholder="Nhập yêu cầu phân tích cụ thể cho Phần 3..." />
+            <button class="btn-ai-analyze px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1 shrink-0" data-section="3">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Phân Tích Phần 3
+            </button>
+          </div>
+
+          <div class="bg-white p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between border-b pb-1">
+              <span class="text-xs font-bold text-slate-700">Kết quả Chẩn đoán hiện tại (Phần 3):</span>
+              <button class="btn-toggle-edit text-xs text-sky-600 font-semibold hover:underline" data-target="out_text_3">✏️ Chỉnh sửa thủ công</button>
+            </div>
+            <div id="out_render_3" class="markdown-body text-xs min-h-[120px]"></div>
+            <textarea id="out_text_3" rows="6" class="w-full p-2 border rounded-lg text-xs hidden font-mono"></textarea>
+          </div>
         </div>
 
+        <!-- PHẦN 4: DIỄN TIẾN BỆNH & TÓM TẮT XU HƯỚNG CẬN LÂM SÀNG DẠNG MŨI TÊN -->
         <div id="panelTab4" class="tab-panel hidden space-y-3">
-          <textarea id="s4_results" rows="3" class="w-full p-2 text-xs border rounded-lg" placeholder="Kết quả CLS bổ sung">- Khí máu: pH 7.31, PaO2 60 mmHg. Troponin I hs (sau 3h): Tăng vọt 2.45 ng/mL. Siêu âm tim: LVEF 38%, giảm động vùng...</textarea>
-          <button class="btn-ai-analyze px-4 py-2.5 bg-sky-600 text-white rounded-xl text-xs font-bold shadow" data-step="4">🤖 AI Đề Xuất CLS Bổ Sung (Bước 4)</button>
-          <div id="aiOutput_4" class="markdown-body bg-white p-4 rounded-xl border border-slate-200 min-h-[100px] text-xs"></div>
+          <div class="bg-indigo-50/80 p-3 rounded-xl border border-indigo-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-indigo-900 text-xs flex items-center gap-1">
+                <i data-lucide="activity" class="w-4 h-4"></i> Nhập diễn tiến khám & y lệnh ngày hôm nay:
+              </label>
+              <input id="p4_current_date" type="text" class="p-1 border rounded text-xs w-28 text-center font-bold" value="02/10/2026" placeholder="DD/MM/YYYY" />
+            </div>
+            <textarea id="p4_progress_text" rows="3" class="w-full p-2 text-xs border rounded-lg bg-white" placeholder="Bệnh nhân bớt khó thở, rale ẩm giảm. Đã truyền Nitroglycerin..."></textarea>
+            
+            <label class="font-bold text-indigo-900 text-xs block">Kết quả CLS mới làm thêm hôm nay:</label>
+            <textarea id="p4_progress_labs" rows="2" class="w-full p-2 text-xs border rounded-lg bg-white" placeholder="WBC: 8.5 K/uL, Troponin I: 1.10 ng/mL, X-quang: Tổn thương thâm nhiễm giảm..."></textarea>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <input type="file" id="p4_image_input" accept="image/*,.pdf" capture="environment" class="hidden" multiple />
+                <button type="button" onclick="document.getElementById('p4_image_input').click()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-indigo-800 border rounded text-[11px] font-semibold flex items-center gap-1">
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i> Tải ảnh / Chụp hình CLS ngày
+                </button>
+                <span id="p4_image_count" class="text-[11px] text-slate-500 italic">Chưa chọn tệp...</span>
+              </div>
+              
+              <button id="btnAddProgressDay" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Lưu Diễn Tiến Ngày & Phân Tích
+              </button>
+            </div>
+          </div>
+
+          <input id="prompt_sec_4" type="text" class="w-full p-2 border rounded-lg text-xs" placeholder="Nhập yêu cầu phân tích cụ thể cho Diễn tiến (VD: So sánh Troponin I và X-quang qua các ngày)..." />
+
+          <div class="bg-white p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between border-b pb-1">
+              <span class="text-xs font-bold text-slate-700">Kết quả Đánh giá Diễn tiến & Tóm tắt xu hướng CLS (Phần 4):</span>
+              <button class="btn-toggle-edit text-xs text-sky-600 font-semibold hover:underline" data-target="out_text_4">✏️ Chỉnh sửa thủ công</button>
+            </div>
+            <div id="out_render_4" class="markdown-body text-xs min-h-[140px]"></div>
+            <textarea id="out_text_4" rows="8" class="w-full p-2 border rounded-lg text-xs hidden font-mono"></textarea>
+          </div>
         </div>
 
+        <!-- PHẦN 5: PHÁC ĐỒ VÀ KẾ HOẠCH ĐIỀU TRỊ 3 NGÀY TIẾP THEO -->
         <div id="panelTab5" class="tab-panel hidden space-y-3">
-          <button class="btn-ai-analyze px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow" data-step="5">🤖 AI Tổng Hợp Chẩn Đoán Xác Định (Bước 5)</button>
-          <div id="aiOutput_5" class="markdown-body bg-white p-4 rounded-xl border border-slate-200 min-h-[100px] text-xs"></div>
+          <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span class="text-xs text-emerald-800 font-semibold">Tự động lập Phác đồ & Kế hoạch điều trị chi tiết cho 3 NGÀY TIẾP THEO (Ngày +1, Ngày +2, Ngày +3)</span>
+            <button class="btn-ai-analyze px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1 shrink-0" data-section="5">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Lập Phác Đồ 3 Ngày
+            </button>
+          </div>
+
+          <input id="prompt_sec_5" type="text" class="w-full p-2 border rounded-lg text-xs" placeholder="Nhập yêu cầu điều trị cụ thể (VD: Chú ý liều chống đông và thời điểm chụp vành)..." />
+
+          <div class="bg-white p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between border-b pb-1">
+              <span class="text-xs font-bold text-slate-700">Nội dung Phác đồ & Kế hoạch 3 Ngày (Phần 5):</span>
+              <button class="btn-toggle-edit text-xs text-sky-600 font-semibold hover:underline" data-target="out_text_5">✏️ Chỉnh sửa thủ công</button>
+            </div>
+            <div id="out_render_5" class="markdown-body text-xs min-h-[140px]"></div>
+            <textarea id="out_text_5" rows="8" class="w-full p-2 border rounded-lg text-xs hidden font-mono"></textarea>
+          </div>
         </div>
 
+        <!-- PHẦN 6: Y LỆNH, Y LỆNH DỰ TRÙ VÀ TỔNG KẾT XUẤT VIỆN -->
         <div id="panelTab6" class="tab-panel hidden space-y-3">
-          <button class="btn-ai-analyze px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow" data-step="6">🤖 AI Lập Phác Đồ Điều Trị (Bước 6)</button>
-          <div id="aiOutput_6" class="markdown-body bg-white p-4 rounded-xl border border-slate-200 min-h-[100px] text-xs"></div>
-        </div>
-      </div>
+          <div class="bg-slate-100 p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-800 text-xs">Mẫu Y Lệnh & Y Lệnh Dự Trù Ngày Tiếp Theo:</label>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500">Dự trù ngày:</span>
+                <input id="p6_next_date" type="text" class="p-1 border rounded text-xs w-28 text-center font-bold bg-white" value="03/10/2026" placeholder="DD/MM/YYYY" />
+              </div>
+            </div>
 
-      <!-- FOOTER -->
-      <div class="p-3 bg-slate-100 border-t flex items-center justify-between">
-        <button id="btnSaveCase" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-medium">💾 Lưu Case Bệnh Nhân</button>
+            <!-- MẪU NHẬP Y LỆNH THEO YÊU CẦU -->
+            <textarea id="p6_orders_template" rows="5" class="w-full p-2 text-xs border rounded-lg bg-white font-mono" placeholder="Diễn biến bệnh:
+(Chẩn đoán): [Tự động đồng bộ từ Phần 4]
+(Y lệnh):
+- Furosemide 40mg IV x 1
+- Nitroglycerin 10mcg/p IV...
+Y lệnh dự trù ngày 03/10/2026:
+- Tăng liều DAPT, theo dõi SpO2..."></textarea>
+
+            <div class="flex items-center justify-between pt-1">
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" id="p6_discharge_check" class="rounded text-sky-600" /> Dự kiến xuất viện?
+                </label>
+                <input id="p6_discharge_date" type="text" class="p-1 border rounded text-xs w-28 text-center font-bold bg-white hidden" value="04/10/2026" placeholder="Ngày XV" />
+              </div>
+
+              <button class="btn-ai-analyze px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1" data-section="6">
+                <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Cập Nhật Y Lệnh & Xuất Viện
+              </button>
+            </div>
+          </div>
+
+          <input id="prompt_sec_6" type="text" class="w-full p-2 border rounded-lg text-xs" placeholder="Yêu cầu bổ sung cho Y lệnh hoặc Tóm tắt xuất viện..." />
+
+          <!-- TỰ ĐỘNG NHẮC NHỞ KHÁNG SINH & BIÊN BẢN HỘI CHẨN -->
+          <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1.5 text-xs">
+            <h4 class="font-bold text-amber-900 flex items-center gap-1">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i> Nhắc Nhở & Biên Bản Hội Chẩn Tự Động:
+            </h4>
+            <div id="p6_reminders_container" class="space-y-1 text-slate-700">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked class="rounded text-amber-600" /> Kháng sinh Meropenem 1g*: Ngày thứ 3/7 (Cần làm Biên bản hội chẩn)
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked class="rounded text-amber-600" /> Chỉ định CT-Scan Ngực: Cần Biên bản hội chẩn Kỹ thuật cao
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-white p-3 rounded-xl border space-y-2">
+            <div class="flex items-center justify-between border-b pb-1">
+              <span class="text-xs font-bold text-slate-700">Y Lệnh Dự Trù & Bảng TỔNG KẾT XUẤT VIỆN (Phần 6):</span>
+              <button class="btn-toggle-edit text-xs text-sky-600 font-semibold hover:underline" data-target="out_text_6">✏️ Chỉnh sửa thủ công</button>
+            </div>
+            <div id="out_render_6" class="markdown-body text-xs min-h-[140px]"></div>
+            <textarea id="out_text_6" rows="10" class="w-full p-2 border rounded-lg text-xs hidden font-mono"></textarea>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
 
   <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white max-w-md w-full rounded-2xl p-6 space-y-4 shadow-xl">
-      <h3 class="font-bold text-slate-800 text-sm">Cấu Hình Gemini API</h3>
-      <input id="inputCustomApiKey" type="password" class="w-full p-2 border rounded text-xs" placeholder="Nhập API Key cá nhân..." />
-      <button id="btnSaveSettings" class="w-full py-2 bg-sky-600 text-white rounded text-xs font-bold">Lưu Cấu Hình</button>
+    <div class="bg-white max-w-md w-full rounded-2xl p-5 space-y-4 shadow-xl">
+      <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+        <i data-lucide="settings" class="w-4 h-4 text-sky-600"></i> Cấu Hình Gemini API
+      </h3>
+      <div>
+        <label class="text-xs font-semibold text-slate-600">Mã API Key (Bắt đầu bằng AIzaSy...):</label>
+        <input id="inputCustomApiKey" type="password" class="w-full p-2 border rounded-lg text-xs mt-1" placeholder="AIzaSy..." />
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-slate-600">Mô hình Gemini ưu tiên:</label>
+        <select id="selectPreferredModel" class="w-full p-2 border rounded-lg text-xs mt-1">
+          <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Khuyên dùng)</option>
+          <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+          <option value="gemini-3.8-live">gemini-3.8-live</option>
+        </select>
+      </div>
+      <button id="btnSaveSettings" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold shadow">Lưu Cấu Hình</button>
     </div>
   </div>
 
@@ -137,42 +381,70 @@
   <script>
     let currentCaseId = null;
     let casesStore = {};
+    let imageStore = { p1: [], p3: [], p4: [] };
 
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       loadCases();
       setupTabs();
+      setupImageInputs();
+      setupEditableToggles();
     });
 
     function loadCases() {
-      const stored = localStorage.getItem('clinical_cases_db');
+      const stored = localStorage.getItem('clinical_cases_v6_db');
       casesStore = stored ? JSON.parse(stored) : {};
       const keys = Object.keys(casesStore);
       if (keys.length === 0) createNewCase();
       else { currentCaseId = keys[0]; loadCaseToUI(currentCaseId); renderCaseList(); }
     }
 
+    function saveStore() {
+      localStorage.setItem('clinical_cases_v6_db', JSON.stringify(casesStore));
+    }
+
     function createNewCase() {
       const id = 'CASE_' + Date.now();
       casesStore[id] = {
         id, title: 'Case Khó Thở & Đau Ngực', createdAt: new Date().toLocaleDateString('vi-VN'),
-        step1: { age: 68, gender: 'Nam', chief_complaint: 'Khó thở cấp tính, đau ngực', vitals: 'Mạch: 115, HA: 170/95, SpO2: 86%', history: 'Khó thở đột ngột 2h khi nằm bẹt...', pmh: 'THA 10 năm, ĐTĐ T2...', physical_exam: 'POCUS B-profile...', current_labs: 'NT-proBNP 4200...' },
-        step4: {}, aiOutputs: {}
+        part1: { patient_name: 'Nguyễn Văn A', gender: 'Nam', age: '68 tuổi (1958)', admission_date: '01/10/2026', chief_complaint: 'Khó thở cấp tính, đau ngực', vitals: 'Mạch: 115, HA: 170/95, SpO2: 86%', history: 'Khó thở đột ngột 2h khi nằm bẹt...', pmh: 'THA 10 năm, ĐTĐ T2...', physical_exam: 'Phổi rale ẩm dâng 2 đáy. POCUS B-profile...', current_labs: 'WBC: 11.2, Troponin I: 0.18, NT-proBNP: 4200...' },
+        part2: { analysis: '' },
+        part3: { additional_labs: '', analysis: '' },
+        part4: { progress_list: [], current_analysis: '' },
+        part5: { analysis: '' },
+        part6: { next_date: '03/10/2026', orders_template: '', analysis: '' }
       };
       currentCaseId = id;
-      localStorage.setItem('clinical_cases_db', JSON.stringify(casesStore));
-      loadCaseToUI(id); renderCaseList();
+      saveStore();
+      loadCaseToUI(id);
+      renderCaseList();
     }
 
     function renderCaseList() {
       const container = document.getElementById('caseListContainer');
       container.innerHTML = '';
-      Object.keys(casesStore).forEach(id => {
+      const keys = Object.keys(casesStore);
+      document.getElementById('caseCountBadge').textContent = keys.length;
+
+      keys.forEach(id => {
         const item = casesStore[id];
         const div = document.createElement('div');
-        div.className = `p-2 rounded text-xs cursor-pointer ${id === currentCaseId ? 'bg-sky-100 font-bold' : 'bg-white border'}`;
-        div.textContent = item.title;
-        div.onclick = () => { currentCaseId = id; loadCaseToUI(id); renderCaseList(); };
+        div.className = `p-2 rounded-lg text-xs cursor-pointer flex items-center justify-between transition ${id === currentCaseId ? 'bg-sky-100 font-bold border-l-4 border-sky-600 text-sky-900' : 'bg-white border text-slate-700 hover:bg-slate-50'}`;
+        div.innerHTML = `
+          <div class="truncate"><p class="truncate">${item.title}</p><p class="text-[10px] text-slate-400 font-normal">${item.part1?.admission_date || ''}</p></div>
+          <button class="btn-del-case text-slate-400 hover:text-red-500 p-1" data-id="${id}">✕</button>
+        `;
+        div.onclick = (e) => {
+          if (e.target.classList.contains('btn-del-case')) {
+            delete casesStore[id];
+            saveStore();
+            loadCases();
+            return;
+          }
+          currentCaseId = id;
+          loadCaseToUI(id);
+          renderCaseList();
+        };
         container.appendChild(div);
       });
     }
@@ -181,10 +453,152 @@
       const c = casesStore[id];
       if (!c) return;
       document.getElementById('inputCaseTitle').value = c.title || '';
-      for (let s = 2; s <= 6; s++) {
-        const out = document.getElementById(`aiOutput_${s}`);
-        if (out) out.innerHTML = c.aiOutputs?.[s] ? marked.parse(c.aiOutputs[s]) : '<p class="text-slate-400">Bấm nút để chạy AI...</p>';
+      
+      // Part 1
+      document.getElementById('p1_name').value = c.part1?.patient_name || '';
+      document.getElementById('p1_gender').value = c.part1?.gender || 'Nam';
+      document.getElementById('p1_age').value = c.part1?.age || '';
+      document.getElementById('p1_date').value = c.part1?.admission_date || '01/10/2026';
+      document.getElementById('p1_complaint').value = c.part1?.chief_complaint || '';
+      document.getElementById('p1_vitals').value = c.part1?.vitals || '';
+      document.getElementById('p1_history').value = c.part1?.history || '';
+      document.getElementById('p1_pmh').value = c.part1?.pmh || '';
+      document.getElementById('p1_physical').value = c.part1?.physical_exam || '';
+      document.getElementById('p1_labs').value = c.part1?.current_labs || '';
+
+      // Render Outputs for Sec 2, 3, 4, 5, 6
+      [2, 3, 4, 5, 6].forEach(sec => {
+        const textVal = c[`part${sec}`]?.analysis || c[`part${sec}`]?.current_analysis || '';
+        document.getElementById(`out_text_${sec}`).value = textVal;
+        document.getElementById(`out_render_${sec}`).innerHTML = textVal ? marked.parse(textVal) : '<p class="text-slate-400 italic">Chưa có kết quả phân tích...</p>';
+      });
+
+      renderProgressSidebar();
+      renderPart6Template();
+    }
+
+    function renderProgressSidebar() {
+      const c = casesStore[currentCaseId];
+      const container = document.getElementById('progressHistorySidebar');
+      container.innerHTML = '';
+
+      if (!c?.part4?.progress_list || c.part4.progress_list.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 italic text-[11px]">Chưa có diễn tiến ngày nào...</p>';
+        return;
       }
+
+      c.part4.progress_list.forEach((p, index) => {
+        const div = document.createElement('div');
+        div.className = 'p-2 bg-indigo-50 border border-indigo-200 rounded-lg cursor-pointer hover:bg-indigo-100 transition';
+        div.innerHTML = `
+          <div class="flex items-center justify-between font-bold text-indigo-900">
+            <span>📅 Ngày ${p.date}</span>
+            <span class="text-[10px] text-indigo-600 font-normal">#${index + 1}</span>
+          </div>
+          <p class="text-[11px] text-slate-600 truncate mt-0.5">${p.text || 'Không có ghi chú'}</p>
+        `;
+        div.onclick = () => {
+          alert(`--- THÔNG TIN DIỄN TIẾN NGÀY ${p.date} ---\n\n📌 Diễn tiến & Y lệnh:\n${p.text}\n\n📌 Cận lâm sàng mới:\n${p.labs_text}\n\n📌 Đánh giá AI:\n${p.analysis || 'Chưa có'}`);
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function renderPart6Template() {
+      const c = casesStore[currentCaseId];
+      if (!c) return;
+
+      const p4Diag = c.part4?.current_analysis ? c.part4.current_analysis.split('\n')[0] : (c.part3?.analysis ? c.part3.analysis.split('\n')[0] : 'Chẩn đoán chưa cập nhật');
+      const nextDate = c.part6?.next_date || '03/10/2026';
+
+      const template = `Diễn biến bệnh: Bệnh nhân tỉnh, tiếp xúc tốt, bớt khó thở.
+(Chẩn đoán): ${p4Diag}
+(Y lệnh):
+- Furosemide 40mg Tiêm tĩnh mạch x 1 ống
+- Nitroglycerin 10mcg/phút truyền IV
+Y lệnh dự trù ngày ${nextDate}:
+- Giảm liều lợi tiểu nếu SpO2 > 95%, duy trì DAPT & Statin.`;
+
+      document.getElementById('p6_orders_template').value = c.part6?.orders_template || template;
+    }
+
+    function syncUItoStore() {
+      const c = casesStore[currentCaseId];
+      if (!c) return;
+
+      c.title = document.getElementById('inputCaseTitle').value || 'Case Lâm Sàng';
+      c.part1 = {
+        patient_name: document.getElementById('p1_name').value,
+        gender: document.getElementById('p1_gender').value,
+        age: document.getElementById('p1_age').value,
+        admission_date: document.getElementById('p1_date').value,
+        chief_complaint: document.getElementById('p1_complaint').value,
+        vitals: document.getElementById('p1_vitals').value,
+        history: document.getElementById('p1_history').value,
+        pmh: document.getElementById('p1_pmh').value,
+        physical_exam: document.getElementById('p1_physical').value,
+        current_labs: document.getElementById('p1_labs').value
+      };
+
+      c.part3.additional_labs = document.getElementById('p3_additional_labs').value;
+      c.part6.next_date = document.getElementById('p6_next_date').value;
+      c.part6.orders_template = document.getElementById('p6_orders_template').value;
+
+      [2, 3, 4, 5, 6].forEach(sec => {
+        const textVal = document.getElementById(`out_text_${sec}`).value;
+        if (sec === 4) c.part4.current_analysis = textVal;
+        else c[`part${sec}`].analysis = textVal;
+      });
+
+      saveStore();
+    }
+
+    function setupEditableToggles() {
+      document.querySelectorAll('.btn-toggle-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.dataset.target;
+          const textarea = document.getElementById(targetId);
+          const renderDiv = document.getElementById(targetId.replace('out_text_', 'out_render_'));
+
+          if (textarea.classList.contains('hidden')) {
+            textarea.classList.remove('hidden');
+            renderDiv.classList.add('hidden');
+            btn.textContent = '👁️ Mở xem dạng Markdown';
+          } else {
+            textarea.classList.add('hidden');
+            renderDiv.classList.remove('hidden');
+            renderDiv.innerHTML = textarea.value ? marked.parse(textarea.value) : '<p class="text-slate-400 italic">Chưa có nội dung...</p>';
+            btn.textContent = '✏️ Chỉnh sửa thủ công';
+            syncUItoStore();
+          }
+        });
+      });
+    }
+
+    function setupImageInputs() {
+      ['p1', 'p3', 'p4'].forEach(prefix => {
+        const input = document.getElementById(`${prefix}_image_input`);
+        const countSpan = document.getElementById(`${prefix}_image_count`);
+        if (!input) return;
+
+        input.addEventListener('change', (e) => {
+          const files = Array.from(e.target.files);
+          imageStore[prefix] = [];
+          if (files.length === 0) {
+            countSpan.textContent = 'Chưa chọn tệp...';
+            return;
+          }
+          countSpan.textContent = `Đã chọn ${files.length} ảnh/file`;
+
+          files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+              imageStore[prefix].push(evt.target.result);
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+      });
     }
 
     function setupTabs() {
@@ -197,43 +611,181 @@
         });
       });
 
+      // AUTO PARSE PART 1
+      document.getElementById('btnAutoParsePart1').addEventListener('click', async () => {
+        const rawText = document.getElementById('p1_raw_text').value;
+        if (!rawText) { alert('Vui lòng nhập văn bản bệnh án thô.'); return; }
+
+        const btn = document.getElementById('btnAutoParsePart1');
+        btn.disabled = true;
+        btn.textContent = '⏳ AI Đang Bóc Tách...';
+
+        try {
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              section: 1,
+              caseData: { part1: { raw_text: rawText } },
+              customApiKey: localStorage.getItem('custom_gemini_key') || ''
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            let jsonClean = data.response.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(jsonClean);
+            if (parsed.vitals) document.getElementById('p1_vitals').value = parsed.vitals;
+            if (parsed.history) document.getElementById('p1_history').value = parsed.history;
+            if (parsed.pmh) document.getElementById('p1_pmh').value = parsed.pmh;
+            if (parsed.physical_exam) document.getElementById('p1_physical').value = parsed.physical_exam;
+            if (parsed.current_labs) document.getElementById('p1_labs').value = parsed.current_labs;
+            syncUItoStore();
+            alert('✅ AI đã phân loại thành công vào các mục!');
+          }
+        } catch (err) { alert('Lỗi phân loại AI: ' + err.message); }
+        finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="wand-2" class="w-3.5 h-3.5"></i> ✨ AI Tự Động Phân Loại';
+          lucide.createIcons();
+        }
+      });
+
+      // SAVE PROGRESS DAY
+      document.getElementById('btnAddProgressDay').addEventListener('click', async () => {
+        syncUItoStore();
+        const c = casesStore[currentCaseId];
+        const date = document.getElementById('p4_current_date').value || '02/10/2026';
+        const text = document.getElementById('p4_progress_text').value;
+        const labs_text = document.getElementById('p4_progress_labs').value;
+
+        if (!text && !labs_text) { alert('Vui lòng nhập diễn tiến hoặc CLS ngày.'); return; }
+
+        const btn = document.getElementById('btnAddProgressDay');
+        btn.disabled = true;
+        btn.textContent = '⏳ AI Đang Đối Chiếu & Tóm Tắt Trend...';
+
+        try {
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              section: 4,
+              caseData: c,
+              current_progress_text: text,
+              current_progress_labs: labs_text,
+              customPrompt: document.getElementById('prompt_sec_4').value,
+              imageList: imageStore.p4,
+              customApiKey: localStorage.getItem('custom_gemini_key') || ''
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            c.part4.progress_list.push({ date, text, labs_text, analysis: data.response });
+            c.part4.current_analysis = data.response;
+            document.getElementById('out_text_4').value = data.response;
+            document.getElementById('out_render_4').innerHTML = marked.parse(data.response);
+            
+            // Advance date +1 day for next progress entry
+            const parts = date.split('/');
+            if (parts.length === 3) {
+              const dt = new Date(parts[2], parts[1] - 1, parts[0]);
+              dt.setDate(dt.getDate() + 1);
+              const nextDayStr = String(dt.getDate()).padStart(2, '0') + '/' + String(dt.getMonth() + 1).padStart(2, '0') + '/' + dt.getFullYear();
+              document.getElementById('p4_current_date').value = nextDayStr;
+              document.getElementById('p6_next_date').value = nextDayStr;
+            }
+
+            saveStore();
+            renderProgressSidebar();
+            renderPart6Template();
+            alert('✅ Đã lưu diễn tiến ngày và phân tích xu hướng CLS!');
+          }
+        } catch (err) { alert('Lỗi phân tích: ' + err.message); }
+        finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Lưu Diễn Tiến Ngày & Phân Tích';
+          lucide.createIcons();
+        }
+      });
+
+      // SECTION 2, 3, 5, 6 ANALYZERS
       document.querySelectorAll('.btn-ai-analyze').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const step = btn.dataset.step;
-          const out = document.getElementById(`aiOutput_${step}`);
+          const sec = btn.dataset.section;
+          syncUItoStore();
+          const c = casesStore[currentCaseId];
+
           btn.disabled = true;
-          out.innerHTML = '⏳ AI 20 năm kinh nghiệm đang phân tích...';
+          const origText = btn.innerHTML;
+          btn.textContent = '⏳ AI 20 Năm Kinh Nghiệm Đang Suy Luận...';
+
+          let imageList = [];
+          if (sec === '2') imageList = imageStore.p1;
+          if (sec === '3') imageList = imageStore.p3;
+          if (sec === '4') imageList = imageStore.p4;
+
+          const isDischarge = document.getElementById('p6_discharge_check').checked;
+          const dischargeDate = document.getElementById('p6_discharge_date').value;
 
           try {
             const res = await fetch('/api/analyze', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                step: parseInt(step),
-                caseData: casesStore[currentCaseId],
-                customApiKey: localStorage.getItem('custom_gemini_key') || ''
+                section: parseInt(sec),
+                caseData: c,
+                customPrompt: document.getElementById(`prompt_sec_${sec}`)?.value || '',
+                imageList: imageList,
+                next_date: document.getElementById('p6_next_date')?.value || '03/10/2026',
+                discharge_date: isDischarge ? dischargeDate : null,
+                customApiKey: localStorage.getItem('custom_gemini_key') || '',
+                preferredModel: localStorage.getItem('preferred_gemini_model') || 'gemini-3.5-flash-lite'
               })
             });
             const data = await res.json();
             if (data.success) {
-              out.innerHTML = marked.parse(data.response);
-              if (!casesStore[currentCaseId].aiOutputs) casesStore[currentCaseId].aiOutputs = {};
-              casesStore[currentCaseId].aiOutputs[step] = data.response;
-              localStorage.setItem('clinical_cases_db', JSON.stringify(casesStore));
+              document.getElementById(`out_text_${sec}`).value = data.response;
+              document.getElementById(`out_render_${sec}`).innerHTML = marked.parse(data.response);
+              
+              if (sec === '6' && isDischarge) {
+                // Advance date if template updated
+                const curNext = document.getElementById('p6_next_date').value;
+                const parts = curNext.split('/');
+                if (parts.length === 3) {
+                  const dt = new Date(parts[2], parts[1] - 1, parts[0]);
+                  dt.setDate(dt.getDate() + 1);
+                  const newNextStr = String(dt.getDate()).padStart(2, '0') + '/' + String(dt.getMonth() + 1).padStart(2, '0') + '/' + dt.getFullYear();
+                  document.getElementById('p6_next_date').value = newNextStr;
+                }
+              }
+
+              syncUItoStore();
             } else {
-              out.innerHTML = `❌ Lỗi: ${data.error}`;
+              alert('Lỗi AI: ' + data.error);
             }
-          } catch (e) { out.innerHTML = `❌ Lỗi kết nối: ${e.message}`; }
-          finally { btn.disabled = false; }
+          } catch (e) { alert('Lỗi kết nối: ' + e.message); }
+          finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            lucide.createIcons();
+          }
         });
       });
 
+      document.getElementById('p6_discharge_check').addEventListener('change', (e) => {
+        const input = document.getElementById('p6_discharge_date');
+        if (e.target.checked) input.classList.remove('hidden');
+        else input.classList.add('hidden');
+      });
+
       document.getElementById('btnNewCase').onclick = createNewCase;
-      document.getElementById('btnSaveCase').onclick = () => alert('✅ Đã lưu Case thành công!');
+      document.getElementById('btnSaveCase').onclick = () => { syncUItoStore(); alert('✅ Đã lưu Case thành công!'); };
       document.getElementById('btnSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
       document.getElementById('btnSaveSettings').onclick = () => {
         localStorage.setItem('custom_gemini_key', document.getElementById('inputCustomApiKey').value);
+        localStorage.setItem('preferred_gemini_model', document.getElementById('selectPreferredModel').value);
         document.getElementById('settingsModal').classList.add('hidden');
+        alert('✅ Đã lưu cấu hình API!');
       };
     }
   </script>
