@@ -1,8 +1,0 @@
-# Cấu hình cổng chạy Server Node.js
-PORT=3000
-
-# Khóa Gemini API chính thức
-GEMINI_API_KEY=AQ.Ab8RN6K0xi5jK7m65ZD16E6-swsF1kYxKeKM5YYlvcE1DEdFLA
-
-# Mô hình Gemini ưu tiên
-GEMINI_MODEL=gemini-1.5-flash
